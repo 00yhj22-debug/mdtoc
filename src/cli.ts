@@ -15,6 +15,7 @@ Usage:
 
 Options:
   -w, --write       update the file in place between <!-- toc --> markers
+  -c, --check       exit 1 if the file's TOC is out of date (no write)
       --min <n>     lowest heading level to include (default: 1)
       --max <n>     highest heading level to include (default: 6)
   -h, --help        show this help and exit
@@ -24,6 +25,7 @@ Options:
 interface ParsedArgs {
   file: string | undefined;
   write: boolean;
+  check: boolean;
   options: TocOptions;
 }
 
@@ -36,7 +38,12 @@ function parseLevel(flag: string, raw: string | undefined): number {
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
-  const parsed: ParsedArgs = { file: undefined, write: false, options: {} };
+  const parsed: ParsedArgs = {
+    file: undefined,
+    write: false,
+    check: false,
+    options: {},
+  };
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
@@ -44,6 +51,10 @@ function parseArgs(argv: string[]): ParsedArgs {
       case "-w":
       case "--write":
         parsed.write = true;
+        break;
+      case "-c":
+      case "--check":
+        parsed.check = true;
         break;
       case "--min":
         parsed.options.minLevel = parseLevel("--min", argv[++i]);
@@ -60,6 +71,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         }
         parsed.file = arg;
     }
+  }
+
+  if (parsed.write && parsed.check) {
+    throw new Error("--write and --check cannot be used together");
   }
 
   return parsed;
@@ -100,12 +115,19 @@ export function main(argv: string[]): number {
     return 2;
   }
 
-  if (args.write) {
+  if (args.write || args.check) {
     let updated: string;
     try {
       updated = updateToc(markdown, args.options);
     } catch (error) {
       process.stderr.write(`mdtoc: ${(error as Error).message}\n`);
+      return 1;
+    }
+    if (args.check) {
+      if (updated === markdown) {
+        return 0;
+      }
+      process.stderr.write(`mdtoc: ${args.file} is out of date\n`);
       return 1;
     }
     writeFileSync(args.file, updated, "utf8");

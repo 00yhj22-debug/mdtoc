@@ -63,4 +63,29 @@ describe("cli", () => {
     const path = writeDoc("doc.md", "# One\n## Two\n### Three\n");
     expect(main([path, "--min", "2", "--max", "2"])).toBe(0);
   });
+
+  it("returns 0 with --check when the TOC is already up to date", () => {
+    const upToDate =
+      "# Guide\n\n<!-- toc -->\n\n- [Guide](#guide)\n  - [Install](#install)\n  - [Usage](#usage)\n\n<!-- /toc -->\n\n## Install\n## Usage\n";
+    const path = writeDoc("doc.md", upToDate);
+
+    expect(main([path, "--check"])).toBe(0);
+
+    // --check must not touch the file
+    expect(readFileSync(path, "utf8")).toBe(upToDate);
+  });
+
+  it("returns 1 with --check when the TOC is stale", () => {
+    const stale = "# Guide\n\n<!-- toc -->\n\n- [Old](#old)\n\n<!-- /toc -->\n\n## Install\n";
+    const path = writeDoc("doc.md", stale);
+
+    expect(main([path, "--check"])).toBe(1);
+    // --check must not touch the file
+    expect(readFileSync(path, "utf8")).toBe(stale);
+  });
+
+  it("rejects --write and --check together", () => {
+    const path = writeDoc("doc.md", "# A\n");
+    expect(main([path, "--write", "--check"])).toBe(2);
+  });
 });

@@ -48,6 +48,9 @@ node dist/cli.js README.md --min 2 --max 3
 
 # Rewrite the file in place (see below)
 node dist/cli.js README.md --write
+
+# Check that the TOC is up to date — exits 1 if it would change (CI friendly)
+node dist/cli.js README.md --check
 ```
 
 ## Keeping a TOC in sync
