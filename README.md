@@ -51,6 +51,9 @@ node dist/cli.js README.md --write
 
 # Check that the TOC is up to date — exits 1 if it would change (CI friendly)
 node dist/cli.js README.md --check
+
+# Use four spaces per nesting level (e.g. for markdownlint MD007 rules)
+node dist/cli.js README.md --write --indent 4
 ```
 
 ## Keeping a TOC in sync

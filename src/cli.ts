@@ -18,6 +18,7 @@ Options:
   -c, --check       exit 1 if the file's TOC is out of date (no write)
       --min <n>     lowest heading level to include (default: 1)
       --max <n>     highest heading level to include (default: 6)
+      --indent <n>  spaces per nesting level (default: 2)
   -h, --help        show this help and exit
   -v, --version     show the version and exit
 `;
@@ -35,6 +36,17 @@ function parseLevel(flag: string, raw: string | undefined): number {
     throw new Error(`${flag} expects an integer between 1 and 6`);
   }
   return value;
+}
+
+function parseIndent(raw: string | undefined): string {
+  const value = Number(raw);
+  // 0 is allowed for callers that want a flat list (e.g. linting only the
+  // anchor links). The upper bound is arbitrary but big enough that nobody
+  // will hit it accidentally.
+  if (raw === undefined || !Number.isInteger(value) || value < 0 || value > 16) {
+    throw new Error("--indent expects an integer between 0 and 16");
+  }
+  return " ".repeat(value);
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -61,6 +73,9 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--max":
         parsed.options.maxLevel = parseLevel("--max", argv[++i]);
+        break;
+      case "--indent":
+        parsed.options.indent = parseIndent(argv[++i]);
         break;
       default:
         if (arg.startsWith("-")) {

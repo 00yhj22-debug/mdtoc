@@ -88,4 +88,24 @@ describe("cli", () => {
     const path = writeDoc("doc.md", "# A\n");
     expect(main([path, "--write", "--check"])).toBe(2);
   });
+
+  it("uses the requested indent width with --indent", () => {
+    const path = writeDoc(
+      "doc.md",
+      "# Guide\n\n<!-- toc -->\n<!-- /toc -->\n\n## Install\n",
+    );
+    expect(main([path, "--write", "--indent", "4"])).toBe(0);
+    expect(readFileSync(path, "utf8")).toContain("    - [Install](#install)");
+  });
+
+  it("rejects a non-integer --indent value", () => {
+    const path = writeDoc("doc.md", "# A\n");
+    expect(main([path, "--indent", "x"])).toBe(2);
+  });
+
+  it("rejects an out-of-range --indent value", () => {
+    const path = writeDoc("doc.md", "# A\n");
+    expect(main([path, "--indent", "-1"])).toBe(2);
+    expect(main([path, "--indent", "17"])).toBe(2);
+  });
 });
